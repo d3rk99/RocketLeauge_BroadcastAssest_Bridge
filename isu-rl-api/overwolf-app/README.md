@@ -15,3 +15,7 @@ npm run build
 ```
 
 Load this folder in Overwolf developer tools and ensure `manifest.json` is selected.
+
+## Overwolf Event Wiring Notes
+- Listener/bootstrap flow follows the same pattern as Overwolf's events sample app: register listeners, request required features, and log `games.events.getInfo` diagnostics.
+- If Rocket League event names differ in your environment, capture payloads and update `src/eventAdapter.ts` + `src/overwolf.ts`.
