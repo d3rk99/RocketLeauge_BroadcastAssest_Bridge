@@ -55,6 +55,18 @@ ISU RL API is a lightweight esports broadcast utility for Rocket League that bri
 
 ## 3) Quick Start
 
+### Windows One-Click Scripts
+
+From `isu-rl-api/` on Windows:
+
+```bat
+install_all.bat
+run_all.bat
+```
+
+- `install_all.bat` creates `server\.venv`, installs Python deps, copies `.env` files, installs/builds Overwolf app dependencies.
+- `run_all.bat` starts backend (`:8000`) and static web hosting (`:5500`) in separate terminal windows.
+
 ### Backend
 ```bash
 cd isu-rl-api/server
