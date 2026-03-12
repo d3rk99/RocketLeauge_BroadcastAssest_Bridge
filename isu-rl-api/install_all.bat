@@ -3,22 +3,69 @@ setlocal EnableExtensions
 set EXIT_CODE=0
 
 REM ISU RL API - one-click installer for Windows
-REM Installs Python backend dependencies and Overwolf app npm deps.
-REM Keeps window open at end so errors can be read.
+REM Installs Python (if missing), creates venv, installs backend deps,
+REM and builds Overwolf app deps. Keeps window open for errors.
 
 cd /d "%~dp0"
 
-echo [1/5] Checking Python availability...
+set "PYTHON_EXE="
+
+echo [1/6] Finding Python executable...
 where py >nul 2>nul
+if %errorlevel% equ 0 (
+  set "PYTHON_EXE=py -3"
+  echo Found Python launcher: py
+  goto python_ready
+)
+
+where python >nul 2>nul
+if %errorlevel% equ 0 (
+  set "PYTHON_EXE=python"
+  echo Found Python executable: python
+  goto python_ready
+)
+
+echo Python not found in PATH.
+echo Attempting to install Python 3 via winget...
+where winget >nul 2>nul
 if %errorlevel% neq 0 (
-  echo ERROR: Python launcher 'py' not found. Install Python 3.10+ and ensure 'py' is on PATH.
+  echo ERROR: winget is not available, so Python cannot be auto-installed.
+  echo Install Python 3.10+ manually, then run this script again.
   set EXIT_CODE=1
   goto end
 )
 
-echo [2/5] Creating virtual environment (server\.venv)...
+winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
+if %errorlevel% neq 0 (
+  echo ERROR: winget Python install failed.
+  echo Install Python manually from https://www.python.org/downloads/ and rerun.
+  set EXIT_CODE=1
+  goto end
+)
+
+REM Refresh detection after install
+where py >nul 2>nul
+if %errorlevel% equ 0 (
+  set "PYTHON_EXE=py -3"
+  echo Python installed and detected via py launcher.
+  goto python_ready
+)
+where python >nul 2>nul
+if %errorlevel% equ 0 (
+  set "PYTHON_EXE=python"
+  echo Python installed and detected via python executable.
+  goto python_ready
+)
+
+echo ERROR: Python installed but not found in current shell PATH.
+echo Close this window, open a new terminal, and rerun install_all.bat.
+set EXIT_CODE=1
+goto end
+
+:python_ready
+echo [2/6] Creating virtual environment (server\.venv)...
 if not exist "server\.venv\Scripts\python.exe" (
-  py -3 -m venv "server\.venv"
+  call %PYTHON_EXE% -m venv "server\.venv"
   if %errorlevel% neq 0 (
     echo ERROR: Failed to create virtual environment.
     set EXIT_CODE=1
@@ -28,7 +75,7 @@ if not exist "server\.venv\Scripts\python.exe" (
   echo Existing virtual environment found.
 )
 
-echo [3/5] Installing backend requirements...
+echo [3/6] Installing backend requirements into server\.venv...
 call "server\.venv\Scripts\activate.bat"
 python -m pip install --upgrade pip
 if %errorlevel% neq 0 (
@@ -43,11 +90,11 @@ if %errorlevel% neq 0 (
   goto end
 )
 
-echo [4/5] Preparing .env files...
+echo [4/6] Preparing .env files...
 if not exist "server\.env" copy /y "server\.env.example" "server\.env" >nul
 if not exist "overwolf-app\.env" copy /y "overwolf-app\.env.example" "overwolf-app\.env" >nul
 
-echo [5/5] Installing Overwolf app dependencies...
+echo [5/6] Installing Overwolf app dependencies...
 where npm >nul 2>nul
 if %errorlevel% neq 0 (
   echo WARNING: npm not found. Skipping overwolf-app npm install/build.
@@ -72,6 +119,8 @@ if %errorlevel% neq 0 (
   goto end
 )
 popd
+
+echo [6/6] Install steps complete.
 
 :done
 echo.

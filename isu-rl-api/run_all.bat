@@ -4,7 +4,7 @@ set EXIT_CODE=0
 
 REM ISU RL API - one-click runner for Windows
 REM Starts backend API and static web host in separate terminal windows.
-REM Keeps this launcher window open so messages remain visible.
+REM Uses venv Python to avoid depending on py launcher.
 
 cd /d "%~dp0"
 
@@ -22,8 +22,8 @@ if not exist "server\.env" (
 echo Starting backend on http://localhost:8000 ...
 start "ISU RL API - Backend" cmd /k "cd /d %~dp0server && call .venv\Scripts\activate.bat && uvicorn app:app --host 0.0.0.0 --port 8000 --reload"
 
-echo Starting static host on http://localhost:5500 ...
-start "ISU RL API - Web Host" cmd /k "cd /d %~dp0 && py -3 -m http.server 5500"
+echo Starting static host on http://localhost:5500 using venv Python ...
+start "ISU RL API - Web Host" cmd /k "cd /d %~dp0 && server\.venv\Scripts\python.exe -m http.server 5500"
 
 echo.
 echo Services launched.
