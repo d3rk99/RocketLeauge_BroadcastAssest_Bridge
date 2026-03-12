@@ -1,0 +1,29 @@
+:root { color-scheme: dark; }
+body {
+  margin: 0;
+  background: transparent;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+.scorebug {
+  width: 900px;
+  margin: 20px auto;
+  display: grid;
+  grid-template-columns: 1fr 220px 1fr;
+  background: rgba(10, 10, 18, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.team { padding: 14px; }
+.blue { background: rgba(35, 110, 255, 0.3); }
+.orange { background: rgba(255, 130, 35, 0.3); text-align: right; }
+.team-name { font-size: 22px; font-weight: 700; }
+.score { font-size: 52px; line-height: 1; transition: transform 0.3s ease; }
+.score.flash { transform: scale(1.2); }
+.series { font-size: 16px; opacity: 0.9; }
+.center { text-align: center; padding: 14px; display: flex; flex-direction: column; justify-content: center; }
+#clock { font-size: 42px; font-weight: bold; }
+#series-info { font-size: 18px; margin-bottom: 8px; }
+#overtime { color: #ffd35a; font-size: 24px; font-weight: 700; }
+.hidden { visibility: hidden; }
