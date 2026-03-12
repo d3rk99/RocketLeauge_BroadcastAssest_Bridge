@@ -95,7 +95,48 @@ npm run build
 ```
 Load `overwolf-app/manifest.json` in Overwolf developer tools.
 
-## 4) Mock Mode Testing
+## 4) How to Use ISU RL API (Operator Flow)
+
+After services are running, use this workflow during a broadcast:
+
+1. **Open admin page**: `http://localhost:5500/web/admin/index.html`
+2. **Set backend URL and API key** at the top of the admin page.
+   - Default local backend: `http://localhost:8000`
+   - API key value comes from `server/.env` (`ISU_RL_API_KEY`)
+3. **Set teams and best-of** in the "Teams & Series" section.
+4. **Choose mode**:
+   - **Auto**: backend accepts incoming `/ingest` score/state updates.
+   - **Manual**: backend ignores incoming auto event score updates so operator can override.
+5. **Use overlay URL** in browser or OBS:
+   - `http://localhost:5500/web/overlay/index.html?base=http://localhost:8000`
+6. **Connect Overwolf app** (or use mock events) so normalized events flow into `/ingest`.
+7. **Correct state manually when needed** from admin controls:
+   - Reset match
+   - Manual score changes
+   - Manual series wins
+
+### Useful API examples
+
+Use these if you want direct API control from terminal/Postman:
+
+```bash
+# Read current state
+curl http://localhost:8000/state/current
+
+# Toggle manual mode
+curl -X POST http://localhost:8000/admin/mode \
+  -H "x-api-key: dev-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"auto_mode": false}'
+
+# Set teams and best-of
+curl -X POST http://localhost:8000/admin/set-teams \
+  -H "x-api-key: dev-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{"blue_team_name":"ISU Blue","orange_team_name":"ISU Orange","best_of":5}'
+```
+
+## 5) Mock Mode Testing
 
 You can run v1 end-to-end without Rocket League by enabling mock mode in Overwolf runtime globals (`ISU_RL_MOCK_MODE=true`) and using `src/mockEvents.ts`.
 
@@ -106,7 +147,7 @@ Mock mode simulates:
 - overtime
 - match end + winner
 
-## 5) OBS Setup
+## 6) OBS Setup
 
 1. Add a **Browser Source** in OBS.
 2. Point it to overlay URL:
@@ -114,7 +155,7 @@ Mock mode simulates:
 3. Set desired width/height (for example 1920x1080).
 4. Keep background transparent.
 
-## 6) Known Limitations (v1)
+## 7) Known Limitations (v1)
 
 - Single active match only (no multi-match support).
 - In-memory state only (no persistence/recovery).
