@@ -27,3 +27,6 @@ Load this folder in Overwolf developer tools and ensure `manifest.json` is selec
   python -m json.tool manifest.json
   ```
 - If it still fails, close/reopen Overwolf and load the manifest again.
+
+- If error still appears, make sure Overwolf is loading this exact file path: `...\isu-rl-api\overwolf-app\manifest.json` and not the parent repo folder.
+- If needed, remove and re-add the app in Overwolf dev mode after replacing the manifest.
