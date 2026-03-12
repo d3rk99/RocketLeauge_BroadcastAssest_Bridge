@@ -1,8 +1,10 @@
 @echo off
 setlocal EnableExtensions
+set EXIT_CODE=0
 
 REM ISU RL API - one-click installer for Windows
 REM Installs Python backend dependencies and Overwolf app npm deps.
+REM Keeps window open at end so errors can be read.
 
 cd /d "%~dp0"
 
@@ -10,7 +12,8 @@ echo [1/5] Checking Python availability...
 where py >nul 2>nul
 if %errorlevel% neq 0 (
   echo ERROR: Python launcher 'py' not found. Install Python 3.10+ and ensure 'py' is on PATH.
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 
 echo [2/5] Creating virtual environment (server\.venv)...
@@ -18,7 +21,8 @@ if not exist "server\.venv\Scripts\python.exe" (
   py -3 -m venv "server\.venv"
   if %errorlevel% neq 0 (
     echo ERROR: Failed to create virtual environment.
-    exit /b 1
+    set EXIT_CODE=1
+    goto end
   )
 ) else (
   echo Existing virtual environment found.
@@ -29,12 +33,14 @@ call "server\.venv\Scripts\activate.bat"
 python -m pip install --upgrade pip
 if %errorlevel% neq 0 (
   echo ERROR: pip upgrade failed.
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 pip install -r "server\requirements.txt"
 if %errorlevel% neq 0 (
   echo ERROR: backend dependency install failed.
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 
 echo [4/5] Preparing .env files...
@@ -55,13 +61,15 @@ call npm install
 if %errorlevel% neq 0 (
   echo ERROR: npm install failed.
   popd
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 call npm run build
 if %errorlevel% neq 0 (
   echo ERROR: npm build failed.
   popd
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 popd
 
@@ -69,4 +77,13 @@ popd
 echo.
 echo Install complete.
 echo Next step: run run_all.bat
-exit /b 0
+
+:end
+echo.
+if "%EXIT_CODE%"=="0" (
+  echo Script finished successfully.
+) else (
+  echo Script finished with errors. Review messages above.
+)
+pause
+exit /b %EXIT_CODE%

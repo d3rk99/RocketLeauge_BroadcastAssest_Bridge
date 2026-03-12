@@ -1,14 +1,17 @@
 @echo off
 setlocal EnableExtensions
+set EXIT_CODE=0
 
 REM ISU RL API - one-click runner for Windows
 REM Starts backend API and static web host in separate terminal windows.
+REM Keeps this launcher window open so messages remain visible.
 
 cd /d "%~dp0"
 
 if not exist "server\.venv\Scripts\python.exe" (
   echo ERROR: Missing server virtualenv. Run install_all.bat first.
-  exit /b 1
+  set EXIT_CODE=1
+  goto end
 )
 
 if not exist "server\.env" (
@@ -27,5 +30,15 @@ echo Services launched.
 echo Overlay URL: http://localhost:5500/web/overlay/index.html?base=http://localhost:8000
 echo Admin URL:   http://localhost:5500/web/admin/index.html
 echo.
-echo Note: Load overwolf-app\manifest.json in Overwolf developer tools.
-exit /b 0
+echo Note: Open Overwolf dev tools and load overwolf-app\manifest.json.
+echo Backend/Web windows were started with cmd /k so they remain open.
+
+:end
+echo.
+if "%EXIT_CODE%"=="0" (
+  echo Launcher script finished successfully.
+) else (
+  echo Launcher script finished with errors. Review messages above.
+)
+pause
+exit /b %EXIT_CODE%

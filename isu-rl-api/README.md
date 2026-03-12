@@ -65,7 +65,7 @@ run_all.bat
 ```
 
 - `install_all.bat` creates `server\.venv`, installs Python deps, copies `.env` files, installs/builds Overwolf app dependencies.
-- `run_all.bat` starts backend (`:8000`) and static web hosting (`:5500`) in separate terminal windows.
+- `run_all.bat` starts backend (`:8000`) and static web hosting (`:5500`) in separate terminal windows, and keeps launcher/service windows open so you can read errors.
 
 ### Backend
 ```bash
