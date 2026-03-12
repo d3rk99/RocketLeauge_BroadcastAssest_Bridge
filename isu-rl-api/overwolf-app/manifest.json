@@ -11,24 +11,35 @@
     "start_window": "background",
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [10826]
+      "game_ids": [
+        10826
+      ]
     }
   },
-  "permissions": ["GameInfo", "Web"],
+  "permissions": [
+    "GameInfo",
+    "Web"
+  ],
   "windows": {
     "background": {
       "file": "public/background.html",
       "transparent": true,
       "show_in_taskbar": false,
       "resizable": false,
-      "size": { "width": 400, "height": 300 }
+      "size": {
+        "width": 400,
+        "height": 300
+      }
     },
     "debug": {
       "file": "public/debug.html",
       "transparent": false,
       "show_in_taskbar": true,
       "resizable": true,
-      "size": { "width": 800, "height": 600 }
+      "size": {
+        "width": 800,
+        "height": 600
+      }
     }
   }
 }
