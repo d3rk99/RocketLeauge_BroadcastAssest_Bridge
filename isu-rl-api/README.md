@@ -64,7 +64,7 @@ install_all.bat
 run_all.bat
 ```
 
-- `install_all.bat` auto-detects Python (`py` or `python`), attempts Python install via `winget` if missing, creates `server\.venv`, installs backend deps into that environment, copies `.env` files, and installs/builds Overwolf app dependencies.
+- `install_all.bat` validates a *working* Python runtime (`py`/`python`), handles common Microsoft Store alias issues, attempts Python install via `winget` if needed, creates `server\.venv`, installs backend deps into that environment, copies `.env` files, and installs/builds Overwolf app dependencies.
 - `run_all.bat` starts backend (`:8000`) and static web hosting (`:5500`) in separate terminal windows using the venv Python (no `py` launcher required), and keeps launcher/service windows open so you can read errors.
 
 ### Backend
