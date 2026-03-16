@@ -1,6 +1,6 @@
 // Keep this list minimal for v1. After payload capture, replace with exact RL-supported event features.
 const REQUIRED_FEATURES = ["game_info", "match_info", "match", "roster", "scoreboard"];
-const RL_CLASS_ID = 10826; // Rocket League
+const RL_NAME_HINTS = ["rocket league", "rocketleague"];
 export function initOverwolfListeners(onEvent) {
     if (typeof overwolf === "undefined" || !overwolf.games?.events) {
         console.warn("[ISU RL API] Overwolf runtime not available, skipping live listeners.");
@@ -24,16 +24,16 @@ export function initOverwolfListeners(onEvent) {
             console.error("[ISU RL API] games.events error", error);
         });
     }
-    // Request features for current game session if already running.
+    // Request features for current game session if Rocket League is already running.
     overwolf.games.getRunningGameInfo((result) => {
-        if (result?.success && result?.classId === RL_CLASS_ID && result?.isRunning) {
+        if (result?.success && result?.isRunning && isRocketLeagueGame(result)) {
             requestRequiredFeatures();
         }
     });
     // Re-request when Rocket League launches.
     overwolf.games.onGameInfoUpdated.addListener((gameInfoUpdate) => {
         const gameInfo = gameInfoUpdate?.gameInfo;
-        if (gameInfo?.classId !== RL_CLASS_ID)
+        if (!isRocketLeagueGame(gameInfo))
             return;
         if (gameInfoUpdate?.runningChanged && gameInfo?.isRunning) {
             requestRequiredFeatures();
@@ -53,6 +53,23 @@ function requestRequiredFeatures() {
             console.log("[ISU RL API] games.events.getInfo", info);
         });
     });
+}
+function isRocketLeagueGame(gameInfo) {
+    if (!gameInfo || typeof gameInfo !== "object")
+        return false;
+    const candidates = [
+        gameInfo.title,
+        gameInfo.displayName,
+        gameInfo.name,
+        gameInfo.gameName,
+        gameInfo.shortTitle,
+        gameInfo.processName,
+        gameInfo.processPath,
+        gameInfo.executables?.join?.(" "),
+    ]
+        .filter((value) => typeof value === "string")
+        .map((value) => String(value).toLowerCase());
+    return RL_NAME_HINTS.some((hint) => candidates.some((value) => value.includes(hint)));
 }
 function parseEventData(value) {
     if (typeof value === "string") {
