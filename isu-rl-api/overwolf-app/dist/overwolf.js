@@ -1,7 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initOverwolfListeners = initOverwolfListeners;
 // Keep this list minimal for v1. After payload capture, replace with exact RL-supported event features.
 const REQUIRED_FEATURES = ["game_info", "match_info", "match", "roster", "scoreboard"];
 const RL_NAME_HINTS = ["rocket league", "rocketleague"];
-export function initOverwolfListeners(onEvent) {
+function initOverwolfListeners(onEvent) {
     var _a, _b;
     if (typeof overwolf === "undefined" || !((_a = overwolf.games) === null || _a === void 0 ? void 0 : _a.events)) {
         console.warn("[ISU RL API] Overwolf runtime not available, skipping live listeners.");
@@ -81,7 +84,7 @@ function parseEventData(value) {
         try {
             return JSON.parse(value);
         }
-        catch (_a) {
+        catch {
             return { raw: value };
         }
     }

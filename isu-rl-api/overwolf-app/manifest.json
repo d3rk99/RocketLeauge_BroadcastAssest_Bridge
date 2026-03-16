@@ -7,22 +7,21 @@
     "version": "0.1.0",
     "minimum-overwolf-version": "0.240.0",
     "description": "Rocket League event bridge for broadcast overlays",
-	"icon": "public/icon.png"
+    "icon": "public/icon.png"
   },
   "data": {
-    "start_window": "background",
-    "game_targeting": {
-      "type": "all"
-    }
+    "start_window": "background"
   },
   "permissions": ["GameInfo", "Web"],
   "windows": {
     "background": {
       "file": "public/background.html",
-      "is_background_page": true
+      "transparent": false,
+      "resizable": true
     },
     "debug": {
-      "file": "public/debug.html"
+      "file": "public/debug.html",
+      "transparent": false
     }
   }
 }

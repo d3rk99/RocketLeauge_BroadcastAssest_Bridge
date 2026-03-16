@@ -1,12 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "module": "ES2015",
-    "moduleResolution": "Bundler",
-    "strict": true,
+    "target": "ES2019",
+    "module": "commonjs",
     "outDir": "dist",
-    "rootDir": "src",
-    "lib": ["ES2017", "DOM"]
-  },
-  "include": ["src"]
+    "rootDir": "src"
+  }
 }

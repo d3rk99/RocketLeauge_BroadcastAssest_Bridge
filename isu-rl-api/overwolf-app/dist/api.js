@@ -1,6 +1,9 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.postEvent = postEvent;
 const API_BASE = window.ISU_RL_API_BASE || "http://localhost:8000";
 const API_KEY = window.ISU_RL_API_KEY || "dev-api-key";
-export async function postEvent(event, retries = 3) {
+async function postEvent(event, retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             const response = await fetch(`${API_BASE}/ingest`, {

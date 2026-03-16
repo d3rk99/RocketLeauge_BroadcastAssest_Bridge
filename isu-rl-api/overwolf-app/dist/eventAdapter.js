@@ -1,10 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.adaptEvent = adaptEvent;
 /**
  * Assumptions:
  * - Rocket League game_event payloads vary by Overwolf version/game state.
  * - We map only a safe subset for v1. Unknown fields are passed through in `raw`.
  * - Adjust mappings below after collecting real payload samples.
  */
-export function adaptEvent(raw) {
+function adaptEvent(raw) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     const eventName = raw.name;
     const data = (_a = raw.data) !== null && _a !== void 0 ? _a : {};
