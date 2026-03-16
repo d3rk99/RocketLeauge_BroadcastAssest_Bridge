@@ -2,9 +2,71 @@
 const API_BASE = window.ISU_RL_API_BASE || "http://localhost:8000";
 const API_KEY = window.ISU_RL_API_KEY || "dev-api-key";
 const MOCK_MODE = window.ISU_RL_MOCK_MODE === true || window.ISU_RL_MOCK_MODE === "true";
+const DIAGNOSTICS_KEY = "isu-rl-diagnostics";
+const MAX_DIAGNOSTICS = 100;
 // Keep this list minimal for v1. After payload capture, replace with exact RL-supported event features.
 const REQUIRED_FEATURES = ["game_info", "match_info", "match", "roster", "scoreboard"];
 const RL_NAME_HINTS = ["rocket league", "rocketleague"];
+function getDiagnostics() {
+    try {
+        const raw = window.localStorage.getItem(DIAGNOSTICS_KEY);
+        if (!raw)
+            return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    }
+    catch {
+        return [];
+    }
+}
+function appendDiagnostic(level, message, details) {
+    const entry = {
+        ts: new Date().toISOString(),
+        level,
+        message,
+        details,
+    };
+    const next = [...getDiagnostics(), entry].slice(-MAX_DIAGNOSTICS);
+    try {
+        window.localStorage.setItem(DIAGNOSTICS_KEY, JSON.stringify(next));
+    }
+    catch {
+        // Swallow storage failures; console logging below is fallback.
+    }
+    const logger = level === "error" ? console.error :
+        level === "warn" ? console.warn :
+            console.log;
+    logger(`[ISU RL API] ${message}`, details ?? "");
+    window.dispatchEvent(new CustomEvent("isu-debug-log", {
+        detail: entry,
+    }));
+}
+function toErrorDetails(error) {
+    if (error instanceof Error) {
+        return {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+        };
+    }
+    return { value: String(error) };
+}
+function registerGlobalErrorHandlers() {
+    window.addEventListener("error", (event) => {
+        appendDiagnostic("error", "window.error", {
+            message: event.message,
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+            error: toErrorDetails(event.error),
+        });
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+        appendDiagnostic("error", "window.unhandledrejection", {
+            reason: toErrorDetails(event.reason),
+        });
+    });
+}
 function emitToDebug(raw, normalized) {
     window.dispatchEvent(new CustomEvent("isu-debug-event", {
         detail: { raw, normalized },
@@ -27,7 +89,10 @@ async function postEvent(event, retries = 3) {
             return;
         }
         catch (error) {
-            console.warn(`[ISU RL API] ingest attempt ${attempt} failed`, error);
+            appendDiagnostic("warn", `ingest attempt ${attempt} failed`, {
+                eventType: event.event_type,
+                error: toErrorDetails(error),
+            });
             if (attempt === retries) {
                 throw error;
             }
@@ -139,7 +204,7 @@ function* mockMatchFlow() {
 }
 function initOverwolfListeners(onEvent) {
     if (typeof overwolf === "undefined" || !overwolf.games?.events) {
-        console.warn("[ISU RL API] Overwolf runtime not available, skipping live listeners.");
+        appendDiagnostic("warn", "Overwolf runtime not available, skipping live listeners.");
         return;
     }
     // Register listeners first (sample-app pattern), then request features.
@@ -157,20 +222,24 @@ function initOverwolfListeners(onEvent) {
     });
     if (overwolf.games.events.onError?.addListener) {
         overwolf.games.events.onError.addListener((error) => {
-            console.error("[ISU RL API] games.events error", error);
+            appendDiagnostic("error", "games.events error", error);
         });
     }
     // Request features for current game session if Rocket League is already running.
     overwolf.games.getRunningGameInfo((result) => {
+        appendDiagnostic("info", "getRunningGameInfo result", result);
         if (result?.success && result?.isRunning && isRocketLeagueGame(result)) {
             requestRequiredFeatures();
+            return;
         }
+        appendDiagnostic("info", "Rocket League not detected in running game info", result);
     });
     // Re-request when Rocket League launches.
     overwolf.games.onGameInfoUpdated.addListener((gameInfoUpdate) => {
         const gameInfo = gameInfoUpdate?.gameInfo;
         if (!isRocketLeagueGame(gameInfo))
             return;
+        appendDiagnostic("info", "onGameInfoUpdated (Rocket League match)", gameInfoUpdate);
         if (gameInfoUpdate?.runningChanged && gameInfo?.isRunning) {
             requestRequiredFeatures();
             onEvent({ name: "match_start", data: {} });
@@ -183,10 +252,10 @@ function initOverwolfListeners(onEvent) {
 }
 function requestRequiredFeatures() {
     overwolf.games.events.setRequiredFeatures(REQUIRED_FEATURES, (res) => {
-        console.log("[ISU RL API] setRequiredFeatures", res);
+        appendDiagnostic("info", "setRequiredFeatures response", res);
         // Helpful bootstrap debug payload (mirrors events-sample-app diagnostics).
         overwolf.games.events.getInfo((info) => {
-            console.log("[ISU RL API] games.events.getInfo", info);
+            appendDiagnostic("info", "games.events.getInfo", info);
         });
     });
 }
@@ -222,21 +291,24 @@ function parseEventData(value) {
     return {};
 }
 async function handleRawEvent(raw) {
-    console.log("[ISU RL API] raw event", raw);
+    appendDiagnostic("info", "raw event", raw);
     const normalized = adaptEvent(raw);
     emitToDebug(raw, normalized);
     if (!normalized)
         return;
     try {
         await postEvent(normalized);
-        console.log("[ISU RL API] event forwarded", normalized);
+        appendDiagnostic("info", "event forwarded", normalized);
     }
     catch (error) {
-        console.error("[ISU RL API] failed to forward event", error);
+        appendDiagnostic("error", "failed to forward event", {
+            event: normalized,
+            error: toErrorDetails(error),
+        });
     }
 }
 function runMockMode() {
-    console.log("[ISU RL API] running in MOCK MODE");
+    appendDiagnostic("warn", "running in MOCK MODE");
     const events = Array.from(mockMatchFlow());
     let idx = 0;
     setInterval(async () => {
@@ -245,7 +317,23 @@ function runMockMode() {
         await handleRawEvent({ name: event.event_type, data: event.payload });
     }, 2000);
 }
+function clearDiagnosticsOnBoot() {
+    try {
+        window.localStorage.removeItem(DIAGNOSTICS_KEY);
+    }
+    catch {
+        // Ignore storage issues.
+    }
+}
 function start() {
+    clearDiagnosticsOnBoot();
+    registerGlobalErrorHandlers();
+    appendDiagnostic("info", "background startup", {
+        href: window.location.href,
+        mockMode: MOCK_MODE,
+        apiBase: API_BASE,
+        userAgent: navigator.userAgent,
+    });
     if (MOCK_MODE) {
         runMockMode();
     }
@@ -255,4 +343,9 @@ function start() {
         });
     }
 }
-start();
+try {
+    start();
+}
+catch (error) {
+    appendDiagnostic("error", "fatal startup exception", toErrorDetails(error));
+}
