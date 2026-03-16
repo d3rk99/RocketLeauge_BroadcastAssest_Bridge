@@ -15,8 +15,22 @@ function getDiagnostics() {
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
     }
-    catch {
+    catch (_a) {
         return [];
+    }
+}
+function dispatchDebugEvent(eventName, detail) {
+    try {
+        if (typeof CustomEvent === "function") {
+            window.dispatchEvent(new CustomEvent(eventName, { detail }));
+            return;
+        }
+        const fallbackEvent = document.createEvent("CustomEvent");
+        fallbackEvent.initCustomEvent(eventName, false, false, detail);
+        window.dispatchEvent(fallbackEvent);
+    }
+    catch (_a) {
+        // Never throw from diagnostics/event mirroring paths.
     }
 }
 function appendDiagnostic(level, message, details) {
@@ -30,16 +44,19 @@ function appendDiagnostic(level, message, details) {
     try {
         window.localStorage.setItem(DIAGNOSTICS_KEY, JSON.stringify(next));
     }
-    catch {
+    catch (_a) {
         // Swallow storage failures; console logging below is fallback.
     }
-    const logger = level === "error" ? console.error :
-        level === "warn" ? console.warn :
-            console.log;
-    logger(`[ISU RL API] ${message}`, details ?? "");
-    window.dispatchEvent(new CustomEvent("isu-debug-log", {
-        detail: entry,
-    }));
+    try {
+        const logger = level === "error" ? console.error :
+            level === "warn" ? console.warn :
+                console.log;
+        logger(`[ISU RL API] ${message}`, details !== null && details !== void 0 ? details : "");
+    }
+    catch (_b) {
+        // Never throw from diagnostics logging.
+    }
+    dispatchDebugEvent("isu-debug-log", entry);
 }
 function toErrorDetails(error) {
     if (error instanceof Error) {
@@ -68,9 +85,7 @@ function registerGlobalErrorHandlers() {
     });
 }
 function emitToDebug(raw, normalized) {
-    window.dispatchEvent(new CustomEvent("isu-debug-event", {
-        detail: { raw, normalized },
-    }));
+    dispatchDebugEvent("isu-debug-event", { raw, normalized });
 }
 async function postEvent(event, retries = 3) {
     for (let attempt = 1; attempt <= retries; attempt++) {
@@ -101,8 +116,9 @@ async function postEvent(event, retries = 3) {
     }
 }
 function adaptEvent(raw) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
     const eventName = raw.name;
-    const data = raw.data ?? {};
+    const data = (_a = raw.data) !== null && _a !== void 0 ? _a : {};
     if (eventName === "match_start") {
         return {
             event_type: "match_start",
@@ -121,10 +137,10 @@ function adaptEvent(raw) {
             match_id: "active",
             timestamp: new Date().toISOString(),
             payload: {
-                blue_score: Number(data.blue_score ?? data.blueScore ?? 0),
-                orange_score: Number(data.orange_score ?? data.orangeScore ?? 0),
-                clock: String(data.clock ?? "5:00"),
-                overtime: Boolean(data.overtime ?? false),
+                blue_score: Number((_c = (_b = data.blue_score) !== null && _b !== void 0 ? _b : data.blueScore) !== null && _c !== void 0 ? _c : 0),
+                orange_score: Number((_e = (_d = data.orange_score) !== null && _d !== void 0 ? _d : data.orangeScore) !== null && _e !== void 0 ? _e : 0),
+                clock: String((_f = data.clock) !== null && _f !== void 0 ? _f : "5:00"),
+                overtime: Boolean((_g = data.overtime) !== null && _g !== void 0 ? _g : false),
                 status: "goal_pause",
             },
         };
@@ -135,8 +151,8 @@ function adaptEvent(raw) {
             match_id: "active",
             timestamp: new Date().toISOString(),
             payload: {
-                clock: String(data.clock ?? "0:00"),
-                overtime: Boolean(data.overtime ?? false),
+                clock: String((_h = data.clock) !== null && _h !== void 0 ? _h : "0:00"),
+                overtime: Boolean((_j = data.overtime) !== null && _j !== void 0 ? _j : false),
                 status: data.overtime ? "overtime" : "live",
             },
         };
@@ -147,8 +163,8 @@ function adaptEvent(raw) {
             match_id: "active",
             timestamp: new Date().toISOString(),
             payload: {
-                blue_score: Number(data.blue_score ?? 0),
-                orange_score: Number(data.orange_score ?? 0),
+                blue_score: Number((_k = data.blue_score) !== null && _k !== void 0 ? _k : 0),
+                orange_score: Number((_l = data.orange_score) !== null && _l !== void 0 ? _l : 0),
                 winner: data.winner === "orange" ? "orange" : "blue",
                 status: "postgame",
             },
@@ -159,7 +175,7 @@ function adaptEvent(raw) {
         match_id: "active",
         timestamp: new Date().toISOString(),
         payload: {
-            status: String(data.status ?? "live"),
+            status: String((_m = data.status) !== null && _m !== void 0 ? _m : "live"),
             raw: data,
         },
     };
@@ -203,24 +219,28 @@ function* mockMatchFlow() {
     };
 }
 function initOverwolfListeners(onEvent) {
-    if (typeof overwolf === "undefined" || !overwolf.games?.events) {
+    var _a, _b;
+    if (typeof overwolf === "undefined" || !((_a = overwolf.games) === null || _a === void 0 ? void 0 : _a.events)) {
         appendDiagnostic("warn", "Overwolf runtime not available, skipping live listeners.");
         return;
     }
     // Register listeners first (sample-app pattern), then request features.
     overwolf.games.events.onInfoUpdates2.addListener((info) => {
-        onEvent({ name: "status_update", data: info?.info ?? info });
+        var _a;
+        onEvent({ name: "status_update", data: (_a = info === null || info === void 0 ? void 0 : info.info) !== null && _a !== void 0 ? _a : info });
     });
     overwolf.games.events.onNewEvents.addListener((events) => {
-        const list = events?.events ?? [];
+        var _a;
+        const list = (_a = events === null || events === void 0 ? void 0 : events.events) !== null && _a !== void 0 ? _a : [];
         list.forEach((evt) => {
+            var _a;
             onEvent({
-                name: String(evt.name ?? "unknown"),
+                name: String((_a = evt.name) !== null && _a !== void 0 ? _a : "unknown"),
                 data: parseEventData(evt.data),
             });
         });
     });
-    if (overwolf.games.events.onError?.addListener) {
+    if ((_b = overwolf.games.events.onError) === null || _b === void 0 ? void 0 : _b.addListener) {
         overwolf.games.events.onError.addListener((error) => {
             appendDiagnostic("error", "games.events error", error);
         });
@@ -228,7 +248,7 @@ function initOverwolfListeners(onEvent) {
     // Request features for current game session if Rocket League is already running.
     overwolf.games.getRunningGameInfo((result) => {
         appendDiagnostic("info", "getRunningGameInfo result", result);
-        if (result?.success && result?.isRunning && isRocketLeagueGame(result)) {
+        if ((result === null || result === void 0 ? void 0 : result.success) && (result === null || result === void 0 ? void 0 : result.isRunning) && isRocketLeagueGame(result)) {
             requestRequiredFeatures();
             return;
         }
@@ -236,16 +256,16 @@ function initOverwolfListeners(onEvent) {
     });
     // Re-request when Rocket League launches.
     overwolf.games.onGameInfoUpdated.addListener((gameInfoUpdate) => {
-        const gameInfo = gameInfoUpdate?.gameInfo;
+        const gameInfo = gameInfoUpdate === null || gameInfoUpdate === void 0 ? void 0 : gameInfoUpdate.gameInfo;
         if (!isRocketLeagueGame(gameInfo))
             return;
         appendDiagnostic("info", "onGameInfoUpdated (Rocket League match)", gameInfoUpdate);
-        if (gameInfoUpdate?.runningChanged && gameInfo?.isRunning) {
+        if ((gameInfoUpdate === null || gameInfoUpdate === void 0 ? void 0 : gameInfoUpdate.runningChanged) && (gameInfo === null || gameInfo === void 0 ? void 0 : gameInfo.isRunning)) {
             requestRequiredFeatures();
             onEvent({ name: "match_start", data: {} });
             return;
         }
-        if (gameInfoUpdate?.runningChanged && !gameInfo?.isRunning) {
+        if ((gameInfoUpdate === null || gameInfoUpdate === void 0 ? void 0 : gameInfoUpdate.runningChanged) && !(gameInfo === null || gameInfo === void 0 ? void 0 : gameInfo.isRunning)) {
             onEvent({ name: "match_end", data: {} });
         }
     });
@@ -260,6 +280,7 @@ function requestRequiredFeatures() {
     });
 }
 function isRocketLeagueGame(gameInfo) {
+    var _a, _b;
     if (!gameInfo || typeof gameInfo !== "object")
         return false;
     const candidates = [
@@ -270,7 +291,7 @@ function isRocketLeagueGame(gameInfo) {
         gameInfo.shortTitle,
         gameInfo.processName,
         gameInfo.processPath,
-        gameInfo.executables?.join?.(" "),
+        (_b = (_a = gameInfo.executables) === null || _a === void 0 ? void 0 : _a.join) === null || _b === void 0 ? void 0 : _b.call(_a, " "),
     ]
         .filter((value) => typeof value === "string")
         .map((value) => String(value).toLowerCase());
@@ -281,7 +302,7 @@ function parseEventData(value) {
         try {
             return JSON.parse(value);
         }
-        catch {
+        catch (_a) {
             return { raw: value };
         }
     }
@@ -321,7 +342,7 @@ function clearDiagnosticsOnBoot() {
     try {
         window.localStorage.removeItem(DIAGNOSTICS_KEY);
     }
-    catch {
+    catch (_a) {
         // Ignore storage issues.
     }
 }

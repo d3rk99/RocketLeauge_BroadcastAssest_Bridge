@@ -49,6 +49,21 @@ function getDiagnostics(): DiagnosticEntry[] {
   }
 }
 
+function dispatchDebugEvent(eventName: string, detail: unknown): void {
+  try {
+    if (typeof CustomEvent === "function") {
+      window.dispatchEvent(new CustomEvent(eventName, { detail }));
+      return;
+    }
+
+    const fallbackEvent = document.createEvent("CustomEvent");
+    fallbackEvent.initCustomEvent(eventName, false, false, detail);
+    window.dispatchEvent(fallbackEvent);
+  } catch {
+    // Never throw from diagnostics/event mirroring paths.
+  }
+}
+
 function appendDiagnostic(level: DiagnosticEntry["level"], message: string, details?: unknown): void {
   const entry: DiagnosticEntry = {
     ts: new Date().toISOString(),
@@ -65,18 +80,18 @@ function appendDiagnostic(level: DiagnosticEntry["level"], message: string, deta
     // Swallow storage failures; console logging below is fallback.
   }
 
-  const logger =
-    level === "error" ? console.error :
-    level === "warn" ? console.warn :
-    console.log;
+  try {
+    const logger =
+      level === "error" ? console.error :
+      level === "warn" ? console.warn :
+      console.log;
 
-  logger(`[ISU RL API] ${message}`, details ?? "");
+    logger(`[ISU RL API] ${message}`, details ?? "");
+  } catch {
+    // Never throw from diagnostics logging.
+  }
 
-  window.dispatchEvent(
-    new CustomEvent("isu-debug-log", {
-      detail: entry,
-    }),
-  );
+  dispatchDebugEvent("isu-debug-log", entry);
 }
 
 function toErrorDetails(error: unknown): Record<string, unknown> {
@@ -110,11 +125,7 @@ function registerGlobalErrorHandlers(): void {
 }
 
 function emitToDebug(raw: RawOverwolfEvent, normalized: unknown): void {
-  window.dispatchEvent(
-    new CustomEvent("isu-debug-event", {
-      detail: { raw, normalized },
-    }),
-  );
+  dispatchDebugEvent("isu-debug-event", { raw, normalized });
 }
 
 async function postEvent(event: NormalizedEvent, retries = 3): Promise<void> {
