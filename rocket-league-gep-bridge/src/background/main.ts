@@ -31,8 +31,34 @@ new LocalhostServer(store.getState, command).start();
 ws.start();
 store.subscribe((s) => ws.broadcast(s));
 
+
+const openDebugWindow = () => {
+  try {
+    overwolf.windows.obtainDeclaredWindow('debug', (result: any) => {
+      const id = result?.window?.id;
+      if (typeof id !== 'number') {
+        logger.warn('Debug window could not be obtained', result);
+        return;
+      }
+
+      overwolf.windows.restore(id, (restoreResult: any) => {
+        if (!restoreResult?.success) logger.warn('Failed to restore debug window, attempting show', restoreResult);
+        overwolf.windows.show(id, (showResult: any) => {
+          if (!showResult?.success) logger.warn('Failed to show debug window', showResult);
+        });
+      });
+    });
+  } catch (err) {
+    logger.warn('Failed to open debug window on startup', err);
+  }
+};
+
 const start = async () => {
+  logger.info('Background window ready');
   logger.info('Booting RL bridge...');
+  store.patchState({ app: { ...store.getState().app } });
+  logger.info('Initial state persisted to data/latest-state.json');
+  openDebugWindow();
   const features = await registerFeaturesWithRetry();
   store.patchState({ app: { ...store.getState().app, connected: features.ok } });
 

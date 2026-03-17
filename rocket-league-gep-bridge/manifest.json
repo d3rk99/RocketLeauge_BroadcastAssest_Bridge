@@ -8,7 +8,7 @@
     "minimum-overwolf-version": "0.250.0",
     "description": "Rocket League live data bridge for OBS overlays.",
     "dock_button_title": "RL GEP Bridge",
-	"icon": "icon.png"
+    "icon": "icon.png"
   },
   "permissions": [
     "GameInfo",
@@ -22,27 +22,27 @@
     "game_targeting": {
       "type": "dedicated",
       "game_ids": [10798]
-    }
-  },
-  "windows": {
-    "background": {
-      "file": "public/windows/background.html",
-      "transparent": true,
-      "resizable": false,
-      "size": { "width": 400, "height": 300 },
-      "is_background_page": true
     },
-    "debug": {
-      "file": "public/windows/debug.html",
-      "desktop_only": true,
-      "resizable": true,
-      "size": { "width": 1100, "height": 760 }
-    },
-    "overlay": {
-      "file": "public/windows/overlay.html",
-      "desktop_only": true,
-      "resizable": true,
-      "size": { "width": 1280, "height": 200 }
+    "windows": {
+      "background": {
+        "file": "public/windows/background.html",
+        "transparent": true,
+        "resizable": false,
+        "size": { "width": 400, "height": 300 },
+        "is_background_page": true
+      },
+      "debug": {
+        "file": "public/windows/debug.html",
+        "desktop_only": true,
+        "resizable": true,
+        "size": { "width": 1100, "height": 760 }
+      },
+      "overlay": {
+        "file": "public/windows/overlay.html",
+        "desktop_only": true,
+        "resizable": true,
+        "size": { "width": 1280, "height": 200 }
+      }
     }
   }
 }

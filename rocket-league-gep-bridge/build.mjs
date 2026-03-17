@@ -7,13 +7,14 @@ cpSync('public', 'dist/public', { recursive: true });
 cpSync('config', 'dist/config', { recursive: true });
 cpSync('data', 'dist/data', { recursive: true });
 cpSync('manifest.json', 'dist/manifest.json');
+cpSync('icon.png', 'dist/icon.png');
 
 const ctx = {
-  entryPoints: [
-    'src/background/main.ts',
-    'src/debug/debug.ts',
-    'src/overlay/overlay.ts'
-  ],
+  entryPoints: {
+    background: 'src/background/main.ts',
+    debug: 'src/debug/debug.ts',
+    overlay: 'src/overlay/overlay.ts'
+  },
   outdir: 'dist',
   bundle: true,
   format: 'iife',
