@@ -2,13 +2,41 @@ declare const overwolf: any;
 
 type LogLevel = "INFO" | "WARN" | "ERROR";
 
+type DiagnosticEntry = {
+  ts: string;
+  level: LogLevel;
+  message: string;
+  data?: unknown;
+};
+
+const DIAGNOSTICS_KEY = "isu-rl-diagnostics";
+const MAX_DIAGNOSTICS = 200;
+
+function writeDiagnostic(entry: DiagnosticEntry): void {
+  try {
+    const currentRaw = window.localStorage.getItem(DIAGNOSTICS_KEY);
+    const current = currentRaw ? JSON.parse(currentRaw) : [];
+    const next = [...(Array.isArray(current) ? current : []), entry].slice(-MAX_DIAGNOSTICS);
+    window.localStorage.setItem(DIAGNOSTICS_KEY, JSON.stringify(next));
+  } catch {
+    // Keep logging non-fatal.
+  }
+}
+
 function log(level: LogLevel, message: string, data?: unknown): void {
   const prefix = `[ISU RL API][${level}]`;
   if (data === undefined) {
     console.log(`${prefix} ${message}`);
-    return;
+  } else {
+    console.log(`${prefix} ${message}`, data);
   }
-  console.log(`${prefix} ${message}`, data);
+
+  writeDiagnostic({
+    ts: new Date().toISOString(),
+    level,
+    message,
+    data,
+  });
 }
 
 function setupRuntimeDiagnostics(): void {

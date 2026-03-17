@@ -1,10 +1,30 @@
+const DIAGNOSTICS_KEY = "isu-rl-diagnostics";
+const MAX_DIAGNOSTICS = 200;
+function writeDiagnostic(entry) {
+    try {
+        const currentRaw = window.localStorage.getItem(DIAGNOSTICS_KEY);
+        const current = currentRaw ? JSON.parse(currentRaw) : [];
+        const next = [...(Array.isArray(current) ? current : []), entry].slice(-MAX_DIAGNOSTICS);
+        window.localStorage.setItem(DIAGNOSTICS_KEY, JSON.stringify(next));
+    }
+    catch {
+        // Keep logging non-fatal.
+    }
+}
 function log(level, message, data) {
     const prefix = `[ISU RL API][${level}]`;
     if (data === undefined) {
         console.log(`${prefix} ${message}`);
-        return;
     }
-    console.log(`${prefix} ${message}`, data);
+    else {
+        console.log(`${prefix} ${message}`, data);
+    }
+    writeDiagnostic({
+        ts: new Date().toISOString(),
+        level,
+        message,
+        data,
+    });
 }
 function setupRuntimeDiagnostics() {
     window.addEventListener("error", (event) => {
