@@ -42,9 +42,9 @@ const openDebugWindow = () => {
       }
 
       overwolf.windows.restore(id, (restoreResult: any) => {
-        if (restoreResult?.success) return;
+        if (!restoreResult?.success) logger.warn('Failed to restore debug window, attempting show', restoreResult);
         overwolf.windows.show(id, (showResult: any) => {
-          if (!showResult?.success) logger.warn('Failed to open debug window', showResult);
+          if (!showResult?.success) logger.warn('Failed to show debug window', showResult);
         });
       });
     });
