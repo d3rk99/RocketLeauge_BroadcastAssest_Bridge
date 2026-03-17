@@ -1,52 +1,92 @@
-import { postEvent } from "./api";
-import { adaptEvent, RawOverwolfEvent } from "./eventAdapter";
-import { mockMatchFlow } from "./mockEvents";
-import { initOverwolfListeners } from "./overwolf";
+declare const overwolf: any;
 
-const MOCK_MODE = (window as any).ISU_RL_MOCK_MODE === true || (window as any).ISU_RL_MOCK_MODE === "true";
+type LogLevel = "INFO" | "WARN" | "ERROR";
 
-function emitToDebug(raw: RawOverwolfEvent, normalized: any): void {
-  window.dispatchEvent(
-    new CustomEvent("isu-debug-event", {
-      detail: { raw, normalized },
-    }),
-  );
-}
+type DiagnosticEntry = {
+  ts: string;
+  level: LogLevel;
+  message: string;
+  data?: unknown;
+};
 
-async function handleRawEvent(raw: RawOverwolfEvent): Promise<void> {
-  console.log("[ISU RL API] raw event", raw);
-  const normalized = adaptEvent(raw);
-  emitToDebug(raw, normalized);
-  if (!normalized) return;
+const DIAGNOSTICS_KEY = "isu-rl-diagnostics";
+const MAX_DIAGNOSTICS = 200;
 
+function writeDiagnostic(entry: DiagnosticEntry): void {
   try {
-    await postEvent(normalized);
-    console.log("[ISU RL API] event forwarded", normalized);
-  } catch (error) {
-    console.error("[ISU RL API] failed to forward event", error);
+    const currentRaw = window.localStorage.getItem(DIAGNOSTICS_KEY);
+    const current = currentRaw ? JSON.parse(currentRaw) : [];
+    const next = [...(Array.isArray(current) ? current : []), entry].slice(-MAX_DIAGNOSTICS);
+    window.localStorage.setItem(DIAGNOSTICS_KEY, JSON.stringify(next));
+  } catch {
+    // Keep logging non-fatal.
   }
 }
 
-function runMockMode(): void {
-  console.log("[ISU RL API] running in MOCK MODE");
-  const events = Array.from(mockMatchFlow());
-  let idx = 0;
+function log(level: LogLevel, message: string, data?: unknown): void {
+  const prefix = `[ISU RL API][${level}]`;
+  if (data === undefined) {
+    console.log(`${prefix} ${message}`);
+  } else {
+    console.log(`${prefix} ${message}`, data);
+  }
 
-  setInterval(async () => {
-    const event = events[idx % events.length];
-    idx += 1;
-    await handleRawEvent({ name: event.event_type, data: event.payload });
-  }, 2000);
+  writeDiagnostic({
+    ts: new Date().toISOString(),
+    level,
+    message,
+    data,
+  });
+}
+
+function setupRuntimeDiagnostics(): void {
+  window.addEventListener("error", (event) => {
+    log("ERROR", "Runtime error", {
+      message: event.message,
+      filename: event.filename,
+      lineno: event.lineno,
+      colno: event.colno,
+    });
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    log("ERROR", "Unhandled promise rejection", event.reason);
+  });
+}
+
+function hasOverwolfEventsApi(): boolean {
+  try {
+    return (
+      typeof overwolf !== "undefined" &&
+      Boolean(overwolf.games) &&
+      Boolean(overwolf.games.events) &&
+      Boolean(overwolf.games.events.onNewEvents) &&
+      typeof overwolf.games.events.onNewEvents.addListener === "function"
+    );
+  } catch {
+    return false;
+  }
 }
 
 function start(): void {
-  if (MOCK_MODE) {
-    runMockMode();
-  } else {
-    initOverwolfListeners((event) => {
-      void handleRawEvent(event);
-    });
+  setupRuntimeDiagnostics();
+
+  log("INFO", "ISU RL API background started");
+  log("INFO", "Overwolf availability", { available: typeof overwolf !== "undefined" });
+
+  if (!hasOverwolfEventsApi()) {
+    log("WARN", "Overwolf games events API is unavailable in this context");
+    return;
   }
+
+  log("INFO", "Registering game events listener");
+  overwolf.games.events.onNewEvents.addListener((events: unknown) => {
+    log("INFO", "Game events", events);
+  });
 }
 
-start();
+try {
+  start();
+} catch (error) {
+  log("ERROR", "Fatal startup error", error);
+}

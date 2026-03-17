@@ -1,4 +1,7 @@
-export function* mockMatchFlow() {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.mockMatchFlow = mockMatchFlow;
+function* mockMatchFlow() {
     yield {
         event_type: "match_start",
         match_id: "active",
