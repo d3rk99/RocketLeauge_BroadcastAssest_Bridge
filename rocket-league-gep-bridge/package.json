@@ -1,0 +1,16 @@
+{
+  "name": "rocket-league-gep-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Overwolf GEP bridge for Rocket League broadcast overlays",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "npm run clean && node build.mjs",
+    "dev": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.2"
+  }
+}

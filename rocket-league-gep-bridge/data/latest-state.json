@@ -1,0 +1,11 @@
+{
+  "app": { "name": "RL GEP Bridge", "version": "0.1.0", "connected": false, "lastUpdate": 0, "source": "overwolf-gep" },
+  "game": { "title": "Rocket League", "isRunning": false, "isInFocus": false, "gameId": 10826 },
+  "match": { "active": false, "phase": "idle", "matchType": null, "gameMode": null, "isRanked": null, "arena": null, "server": null, "mutators": null, "overtime": false, "winner": null },
+  "teams": { "blue": { "id": 1, "name": "Blue", "score": 0 }, "orange": { "id": 2, "name": "Orange", "score": 0 } },
+  "players": [],
+  "me": { "name": null, "steamId": null, "team": null, "score": null, "goals": null },
+  "series": { "enabled": true, "format": "bo5", "targetWins": 3, "blueWins": 0, "orangeWins": 0, "currentGameNumber": 1, "gameFinished": false },
+  "events": { "lastGoalBy": null, "lastGoalTeam": null, "lastEvent": null },
+  "raw": { "info": {}, "events": [] }
+}

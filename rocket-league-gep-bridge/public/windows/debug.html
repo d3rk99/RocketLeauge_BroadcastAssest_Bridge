@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>RL Bridge Debug</title>
+    <style>
+      body { font-family: Arial, sans-serif; background:#101522; color:#dbe5ff; margin:0; padding:16px; }
+      button{ margin:4px; }
+      pre { background:#0d111a; padding:10px; overflow:auto; max-height:260px; }
+      .row{display:flex; gap:12px;}
+      .col{flex:1;}
+    </style>
+  </head>
+  <body>
+    <h1>Rocket League GEP Bridge - Debug</h1>
+    <div id="status"></div>
+    <div>
+      <button data-action="bo3">Set BO3</button>
+      <button data-action="bo5">Set BO5</button>
+      <button data-action="bo7">Set BO7</button>
+      <button data-action="reset-series">Reset Series</button>
+      <button data-action="clear">Clear State</button>
+      <button data-action="export">Export JSON</button>
+    </div>
+    <div class="row">
+      <div class="col"><h3>Recent Events</h3><pre id="events"></pre></div>
+      <div class="col"><h3>Normalized State</h3><pre id="state"></pre></div>
+    </div>
+    <script src="../../debug.js"></script>
+  </body>
+</html>

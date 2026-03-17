@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "format": "bo5",
+  "targetWins": 3,
+  "blueWins": 0,
+  "orangeWins": 0,
+  "currentGameNumber": 1,
+  "gameFinished": false
+}
