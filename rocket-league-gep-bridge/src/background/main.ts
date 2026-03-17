@@ -54,7 +54,10 @@ const openDebugWindow = () => {
 };
 
 const start = async () => {
+  logger.info('Background window ready');
   logger.info('Booting RL bridge...');
+  store.patchState({ app: { ...store.getState().app } });
+  logger.info('Initial state persisted to data/latest-state.json');
   openDebugWindow();
   const features = await registerFeaturesWithRetry();
   store.patchState({ app: { ...store.getState().app, connected: features.ok } });
