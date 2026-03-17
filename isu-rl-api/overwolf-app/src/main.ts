@@ -26,21 +26,39 @@ function setupRuntimeDiagnostics(): void {
   });
 }
 
+function hasOverwolfEventsApi(): boolean {
+  try {
+    return (
+      typeof overwolf !== "undefined" &&
+      Boolean(overwolf.games) &&
+      Boolean(overwolf.games.events) &&
+      Boolean(overwolf.games.events.onNewEvents) &&
+      typeof overwolf.games.events.onNewEvents.addListener === "function"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function start(): void {
   setupRuntimeDiagnostics();
 
   log("INFO", "ISU RL API background started");
   log("INFO", "Overwolf availability", { available: typeof overwolf !== "undefined" });
 
-  if (typeof overwolf !== "undefined" && overwolf?.games?.events?.onNewEvents?.addListener) {
-    log("INFO", "Registering game events listener");
-
-    overwolf.games.events.onNewEvents.addListener((events: unknown) => {
-      log("INFO", "Game events", events);
-    });
-  } else {
+  if (!hasOverwolfEventsApi()) {
     log("WARN", "Overwolf games events API is unavailable in this context");
+    return;
   }
+
+  log("INFO", "Registering game events listener");
+  overwolf.games.events.onNewEvents.addListener((events: unknown) => {
+    log("INFO", "Game events", events);
+  });
 }
 
-start();
+try {
+  start();
+} catch (error) {
+  log("ERROR", "Fatal startup error", error);
+}

@@ -19,19 +19,34 @@ function setupRuntimeDiagnostics() {
         log("ERROR", "Unhandled promise rejection", event.reason);
     });
 }
+function hasOverwolfEventsApi() {
+    try {
+        return (typeof overwolf !== "undefined" &&
+            Boolean(overwolf.games) &&
+            Boolean(overwolf.games.events) &&
+            Boolean(overwolf.games.events.onNewEvents) &&
+            typeof overwolf.games.events.onNewEvents.addListener === "function");
+    }
+    catch {
+        return false;
+    }
+}
 function start() {
-    var _a, _b, _c;
     setupRuntimeDiagnostics();
     log("INFO", "ISU RL API background started");
     log("INFO", "Overwolf availability", { available: typeof overwolf !== "undefined" });
-    if (typeof overwolf !== "undefined" && ((_c = (_b = (_a = overwolf === null || overwolf === void 0 ? void 0 : overwolf.games) === null || _a === void 0 ? void 0 : _a.events) === null || _b === void 0 ? void 0 : _b.onNewEvents) === null || _c === void 0 ? void 0 : _c.addListener)) {
-        log("INFO", "Registering game events listener");
-        overwolf.games.events.onNewEvents.addListener((events) => {
-            log("INFO", "Game events", events);
-        });
-    }
-    else {
+    if (!hasOverwolfEventsApi()) {
         log("WARN", "Overwolf games events API is unavailable in this context");
+        return;
     }
+    log("INFO", "Registering game events listener");
+    overwolf.games.events.onNewEvents.addListener((events) => {
+        log("INFO", "Game events", events);
+    });
 }
-start();
+try {
+    start();
+}
+catch (error) {
+    log("ERROR", "Fatal startup error", error);
+}

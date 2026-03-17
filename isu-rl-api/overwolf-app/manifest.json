@@ -16,6 +16,7 @@
   "windows": {
     "background": {
       "file": "public/background.html",
+      "is_background_page": true,
       "transparent": false,
       "resizable": true
     },
