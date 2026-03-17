@@ -36,8 +36,17 @@ const openDebugWindow = () => {
   try {
     overwolf.windows.obtainDeclaredWindow('debug', (result: any) => {
       const id = result?.window?.id;
-      if (typeof id !== 'number') return;
-      overwolf.windows.restore(id, () => undefined);
+      if (typeof id !== 'number') {
+        logger.warn('Debug window could not be obtained', result);
+        return;
+      }
+
+      overwolf.windows.restore(id, (restoreResult: any) => {
+        if (restoreResult?.success) return;
+        overwolf.windows.show(id, (showResult: any) => {
+          if (!showResult?.success) logger.warn('Failed to open debug window', showResult);
+        });
+      });
     });
   } catch (err) {
     logger.warn('Failed to open debug window on startup', err);
