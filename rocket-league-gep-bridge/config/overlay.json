@@ -1,0 +1,5 @@
+{
+  "httpPort": 31985,
+  "wsPort": 31986,
+  "pollIntervalMs": 500
+}

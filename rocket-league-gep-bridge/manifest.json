@@ -1,0 +1,47 @@
+{
+  "manifest_version": 1,
+  "type": "WebApp",
+  "meta": {
+    "name": "Rocket League GEP Bridge",
+    "author": "Broadcast Dev Team",
+    "version": "0.1.0",
+    "minimum-overwolf-version": "0.250.0",
+    "description": "Rocket League live data bridge for OBS overlays.",
+    "dock_button_title": "RL GEP Bridge"
+  },
+  "permissions": [
+    "GameInfo",
+    "GameControl",
+    "Hotkeys",
+    "Storage",
+    "Web"
+  ],
+  "data": {
+    "start_window": "background",
+    "game_targeting": {
+      "type": "dedicated",
+      "game_ids": [10826]
+    }
+  },
+  "windows": {
+    "background": {
+      "file": "public/windows/background.html",
+      "transparent": true,
+      "resizable": false,
+      "size": { "width": 400, "height": 300 },
+      "is_background_page": true
+    },
+    "debug": {
+      "file": "public/windows/debug.html",
+      "desktop_only": true,
+      "resizable": true,
+      "size": { "width": 1100, "height": 760 }
+    },
+    "overlay": {
+      "file": "public/windows/overlay.html",
+      "desktop_only": true,
+      "resizable": true,
+      "size": { "width": 1280, "height": 200 }
+    }
+  }
+}
