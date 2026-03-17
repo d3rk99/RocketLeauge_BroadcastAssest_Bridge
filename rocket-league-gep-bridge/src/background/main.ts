@@ -31,8 +31,22 @@ new LocalhostServer(store.getState, command).start();
 ws.start();
 store.subscribe((s) => ws.broadcast(s));
 
+
+const openDebugWindow = () => {
+  try {
+    overwolf.windows.obtainDeclaredWindow('debug', (result: any) => {
+      const id = result?.window?.id;
+      if (typeof id !== 'number') return;
+      overwolf.windows.restore(id, () => undefined);
+    });
+  } catch (err) {
+    logger.warn('Failed to open debug window on startup', err);
+  }
+};
+
 const start = async () => {
   logger.info('Booting RL bridge...');
+  openDebugWindow();
   const features = await registerFeaturesWithRetry();
   store.patchState({ app: { ...store.getState().app, connected: features.ok } });
 
