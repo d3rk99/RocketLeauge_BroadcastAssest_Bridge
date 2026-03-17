@@ -21,7 +21,7 @@
     "start_window": "background",
     "game_targeting": {
       "type": "dedicated",
-      "game_ids": [10826]
+      "game_ids": [10798]
     }
   },
   "windows": {
